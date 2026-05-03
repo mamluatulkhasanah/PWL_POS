@@ -23,9 +23,8 @@ class UserModel extends Model
      * Mendefinisikan relasi Many-to-One (BelongsTo) ke tabel LevelModel.
      * Fungsi ini memungkinkan pengambilan data level (seperti nama_level) melalui objek User.
      */
-  public function level(): BelongsTo
+public function level()
 {
-    // Pastikan nama relasi ini 'level'
-    return $this->belongsTo(\App\Models\LevelModel::class, 'level_id', 'level_id');
+    return $this->belongsTo(LevelModel::class, 'level_id', 'level_id');
 }
 }
