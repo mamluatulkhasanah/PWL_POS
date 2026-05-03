@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\SalesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LevelController;
+use App\Http\Controllers\KategoriController;
 
 // 1. Halaman Home
 Route::get('/', [HomeController::class, 'index']);
@@ -26,3 +27,12 @@ Route::get('/sales', [SalesController::class, 'index']);
 
 // 5. Implementasi DB Facade (Praktikum 4)
 Route::get('/level', [LevelController::class, 'index']);
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::get('/level',[LevelController::class, 'index']);
+Route::get('/kategori',[KategoriController::class, 'index']);
+
+
