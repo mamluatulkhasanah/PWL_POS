@@ -1,1 +1,5 @@
-<h1>Selamat Datang di POS</h1>
+@extends('layouts.template')
+@section('content')
+    <!-- Isi konten di sini -->
+@endsection
+```[cite: 1]
