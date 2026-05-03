@@ -21,10 +21,13 @@ class UserController extends Controller
 
         $activeMenu = 'user'; // set menu yang sedang aktif
 
+        $level = LevelModel::all(); // ambil data level untuk filter level
+       
         // 2. Baru kemudian dikirim ke view
         return view('user.index', [
             'breadcrumb' => $breadcrumb, 
             'page' => $page, 
+            'level' => $level,
             'activeMenu' => $activeMenu
         ]);
     }
@@ -37,6 +40,9 @@ class UserController extends Controller
         $search = $request->input('search.value');
 
         $query = UserModel::with('level')->select('user_id', 'username', 'nama', 'level_id');
+        if ($request->filled('level_id')) {
+            $query->where('level_id', $request->level_id);
+        }
         $recordsTotal = UserModel::count();
 
         if (!empty($search)) {
