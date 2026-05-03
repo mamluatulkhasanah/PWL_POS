@@ -12,9 +12,7 @@ class UserController extends Controller
 {
     // Cari user dengan ID 1, ambil kolom username & nama saja.
     // Jika tidak ada, jalankan fungsi abort(404).
-    $user = UserModel::findOr(1, ['username', 'nama'], function () {
-        abort(404);
-    });
+    $user = UserModel::findOrfail(1);
 
     return view('user', ['data' => $user]);
 }
