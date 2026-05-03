@@ -12,7 +12,14 @@ class UserController extends Controller
 {
     // Cari user dengan ID 1, ambil kolom username & nama saja.
     // Jika tidak ada, jalankan fungsi abort(404).
-    $user = UserModel::where('level_id',2)->count();
+    $user = UserModel::firstOrCreate(
+      ['username' => 'manager33'], // Cari berdasarkan username saja
+        [
+            'nama' => 'Manager Tiga Tiga',
+            'password' => Hash::make('12345'),
+            'level_id' => 2
+        ]
+    );
 
     return view('user', ['data' => $user]);
 }
