@@ -8,19 +8,24 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-  public function index()
+   public function index()
 {
-    // Cari user dengan ID 1, ambil kolom username & nama saja.
-    // Jika tidak ada, jalankan fungsi abort(404).
-    $user = UserModel::firstOrCreate(
-      ['username' => 'manager33'], // Cari berdasarkan username saja
-        [
-            'nama' => 'Manager Tiga Tiga',
-            'password' => Hash::make('12345'),
-            'level_id' => 2
-        ]
-    );
+    $user = UserModel::create([
+        'username' => 'manager55',
+        'nama' => 'Manager55',
+        'password' => Hash::make('12345'),
+        'level_id' => 2,
+    ]);
 
-    return view('user', ['data' => $user]);
+    $user->username = 'manager12';
+
+    $user->save();
+
+   $user->wasChanged(); // true
+    $user->wasChanged('username'); // true
+    $user->wasChanged(['username', 'level_id']); // true
+    $user->wasChanged('nama'); // false
+    $user->wasChanged(['nama', 'username']); // true
+    dd($user->WasChanged(['nama','username'])); // true
 }
 }
