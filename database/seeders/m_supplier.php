@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class SupplierSeeder extends Seeder
+class m_supplier extends Seeder
 {
     /**
      * Run the database seeds.

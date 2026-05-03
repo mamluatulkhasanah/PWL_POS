@@ -6,20 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('t_penjualan_detail', function (Blueprint $table) {
-            $table->id();
+            $table->id('detail_id');
+            $table->unsignedBigInteger('penjualan_id');
+            $table->unsignedBigInteger('barang_id');
+            $table->integer('harga');
+            $table->integer('jumlah');
             $table->timestamps();
-        });
-    }
+        }); // <--- PASTIKAN ADA INI (Tutup kurung, titik koma)
+    } // <--- PASTIKAN ADA INI (Tutup kurung kurawal untuk function up)
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('t_penjualan_detail');

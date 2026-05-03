@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class PenjualanDetailSeeder extends Seeder
+class t_penjualan_detail extends Seeder
 {
     /**
      * Run the database seeds.
