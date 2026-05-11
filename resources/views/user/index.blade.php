@@ -6,7 +6,8 @@
             <h3 class="card-title">{{ $page->title }}</h3>
             <div class="card-tools">
                 <a class="btn btn-sm btn-primary mt-1" href="{{ url('user/create') }}">Tambah</a>
-            </div>
+                <button onclick="modalAction('{{ url('user/create_ajax') }}')" class="btn btn-sm btn-success mt-1">Tambah Ajax</button>
+            </div> 
         </div>
         <div class="card-body">
             @if (session('success'))
@@ -16,17 +17,19 @@
                 <div class="alert alert-danger">{{ session('error') }}</div>
             @endif
 
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label for="level_id">Filter:</label>
-                        <select class="form-control" id="level_id" name="level_id">
-                            <option value="">- Semua -</option>
-                            @foreach($level as $item)
-                                <option value="{{ $item->level_id }}">{{ $item->level_nama }}</option>
-                            @endforeach
-                        </select>
-                        <small class="form-text text-muted">Jenis Pengguna</small>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group row">
+                        <label class="col-1 control-label col-form-label">Filter:</label>
+                        <div class="col-3">
+                            <select class="form-control" id="level_id" name="level_id">
+                                <option value="">- Semua -</option>
+                                @foreach($level as $item)
+                                    <option value="{{ $item->level_id }}">{{ $item->level_nama }}</option>
+                                @endforeach
+                            </select>
+                            <small class="form-text text-muted">Jenis Pengguna</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -43,6 +46,7 @@
             </table>
         </div>
     </div>
+    <div id="myModal" class="modal fade animate shake" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false" data-width="75%" aria-hidden="true"></div>
 @endsection
 
 @push('css')
@@ -50,10 +54,19 @@
 
 @push('js')
     <script>
+        // 1. Fungsi modalAction harus di luar document.ready agar bisa diakses atribut onclick
+        function modalAction(url = ''){
+            $('#myModal').load(url, function() {
+                $('#myModal').modal('show');
+            });
+        }
+
+        var dataUser; 
         $(document).ready(function() {
-            var dataUser = $('#table_user').DataTable({
-                processing: true,
+            // 2. Inisialisasi DataTable
+            dataUser = $('#table_user').DataTable({
                 serverSide: true,
+                processing: true,
                 ajax: {
                     url: "{{ url('user/list') }}",
                     dataType: "json",
@@ -67,13 +80,14 @@
                     { data: "username", className: "", orderable: true, searchable: true },
                     { data: "nama", className: "", orderable: true, searchable: true },
                     { data: "level.level_nama", className: "", orderable: false, searchable: false },
-                    { data: "aksi", className: "", orderable: false, searchable: false }
+                    { data: "aksi", className: "text-center", orderable: false, searchable: false }
                 ]
-            });
+            }); // Penutup DataTable
 
-            $('#level_id').change(function() {
+            // 3. Event listener untuk filter
+            $('#level_id').on('change', function() {
                 dataUser.ajax.reload();
             });
-        });
+        }); // Penutup document.ready (TADI ANDA KURANG INI)
     </script>
 @endpush

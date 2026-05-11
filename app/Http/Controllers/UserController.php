@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 use App\Models\LevelModel;
 use App\Models\UserModel;
 use Illuminate\Http\Request;
+use Yajra\DataTables\Facades\DataTables; // Pastikan ini di-import
+use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
@@ -32,72 +34,26 @@ class UserController extends Controller
         ]);
     }
 
-    public function list(Request $request)
+public function list(Request $request)
     {
-        $draw = intval($request->input('draw', 1));
-        $start = intval($request->input('start', 0));
-        $length = intval($request->input('length', 10));
-        $search = $request->input('search.value');
+        $users = UserModel::with('level')->select('user_id', 'username', 'nama', 'level_id');
 
-        $query = UserModel::with('level')->select('user_id', 'username', 'nama', 'level_id');
-        if ($request->filled('level_id')) {
-            $query->where('level_id', $request->level_id);
-        }
-        $recordsTotal = UserModel::count();
-
-        if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->where('username', 'like', "%{$search}%")
-                    ->orWhere('nama', 'like', "%{$search}%")
-                    ->orWhereHas('level', function ($q2) use ($search) {
-                        $q2->where('level_nama', 'like', "%{$search}%");
-                    });
-            });
+        // Filter level_id jika ada
+        if ($request->level_id) {
+            $users->where('level_id', $request->level_id);
         }
 
-        $recordsFiltered = $query->count();
-
-        $order = $request->input('order.0.column');
-        $dir = $request->input('order.0.dir', 'asc');
-        switch ($order) {
-            case 1:
-                $query->orderBy('username', $dir);
-                break;
-            case 2:
-                $query->orderBy('nama', $dir);
-                break;
-            default:
-                $query->orderBy('user_id', $dir);
-                break;
-        }
-
-        $users = $query->skip($start)->take($length)->get();
-
-        $data = [];
-        foreach ($users as $index => $user) {
-            $data[] = [
-                'DT_RowIndex' => $start + $index + 1,
-                'username' => $user->username,
-                'nama' => $user->nama,
-                'level' => [
-                    'level_nama' => optional($user->level)->level_nama,
-                ],
-                'aksi' => '<a href="'.url('/user/' . $user->user_id).'" class="btn btn-info btn-sm">Detail</a> '
-                    . '<a href="'.url('/user/' . $user->user_id . '/edit').'" class="btn btn-warning btn-sm">Edit</a> '
-                    . '<form class="d-inline-block" method="POST" action="'. url('/user/'.$user->user_id).'">'
-                    . csrf_field() . method_field('DELETE')
-                    . '<button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Apakah Anda yakin menghapus data ini?\');">Hapus</button></form>'
-            ];
-        }
-
-        return response()->json([
-            'draw' => $draw,
-            'recordsTotal' => $recordsTotal,
-            'recordsFiltered' => $recordsFiltered,
-            'data' => $data,
-        ]);
+        return DataTables::of($users)
+            ->addIndexColumn() 
+            ->addColumn('aksi', function ($user) {
+                $btn  = '<button onclick="modalAction(\''.url('/user/' . $user->user_id . '/show_ajax').'\')" class="btn btn-info btn-sm">Detail</button> ';
+                $btn .= '<button onclick="modalAction(\''.url('/user/' . $user->user_id . '/edit_ajax').'\')" class="btn btn-warning btn-sm">Edit</button> ';
+                $btn .= '<button onclick="modalAction(\''.url('/user/' . $user->user_id . '/delete_ajax').'\')" class="btn btn-danger btn-sm">Hapus</button> ';
+                return $btn;
+            })
+            ->rawColumns(['aksi'])
+            ->make(true);
     }
-
     // Menampilkan halaman form tambah user
     public function create()
     {
@@ -117,29 +73,28 @@ class UserController extends Controller
     }
 
     // Menyimpan data user baru
-    public function store(Request $request)
-    {
-        $request->validate([
-            // username harus diisi, berupa string, minimal 3 karakter, dan bernilai unik di tabel m_user kolom username
-            'username' => 'required|string|min:3|unique:m_user,username',
-            'nama'     => 'required|string|max:100', // nama harus diisi, berupa string, dan maksimal 100 karakter
-            'password' => 'required|min:5',          // password harus diisi dan minimal 5 karakter
-            'level_id' => 'required|integer'         // level_id harus diisi dan berupa angka
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'username' => 'required|string|min:3|unique:m_user,username',
+        'nama'     => 'required|string|max:100',
+        'password' => 'required|min:5',
+        'level_id' => 'required|integer'
+    ]);
 
-        UserModel::create([
-            'username' => $request->username,
-            'nama'     => $request->nama,
-            'password' => bcrypt($request->password), // password dienkripsi sebelum disimpan
-            'level_id' => $request->level_id
-        ]);
+    UserModel::create([
+        'username' => $request->username,
+        'nama'     => $request->nama,
+        'password' => bcrypt($request->password), // Password harus di-hash
+        'level_id' => $request->level_id
+    ]);
 
-        return redirect('/user')->with('success', 'Data user berhasil disimpan');
-    }
+    return redirect('/user')->with('success', 'Data user berhasil disimpan');
+}
 
     public function show($id)
     {
-        $user = UserModel::with('level')->find($id);
+        $user = UserModel::findorFail($id);
 
         $breadcrumb = (object) [
             'title' => 'Detail User',
@@ -214,4 +169,44 @@ class UserController extends Controller
         return redirect('/user')->with('success', 'Data user berhasil dihapus');
     }
 
+    public function create_ajax()
+    {
+        $level = LevelModel::select('level_id', 'level_nama')->get();
+
+        return view('user.create_ajax')
+            ->with('level', $level);
+    }
+
+   public function store_ajax(Request $request) {
+        if($request->ajax() || $request->wantsJson()){
+            $rules = [
+                'level_id' => 'required|integer',
+                'username' => 'required|string|min:3|unique:m_user,username',
+                'nama'     => 'required|string|max:100',
+                'password' => 'required|min:6'
+            ];
+
+            $validator = Validator::make($request->all(), $rules);
+
+            if($validator->fails()){
+                return response()->json([
+                    'status'   => false,
+                    'message'  => 'Validasi Gagal',
+                    'msgField' => $validator->errors(),
+                ]);
+            }
+
+            // PERBAIKAN: Enkripsi password sebelum simpan
+            $data = $request->all();
+            $data['password'] = bcrypt($data['password']); 
+            
+            UserModel::create($data);
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Data user berhasil disimpan'
+            ]);
+        }
+        return redirect('/');
+    }
 }

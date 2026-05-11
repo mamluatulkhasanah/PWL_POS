@@ -42,4 +42,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+    public function level()
+{
+    // User ini memiliki (belongsTo) sebuah Level
+    return $this->belongsTo(LevelModel::class, 'level_id', 'level_id');
+}
 }
